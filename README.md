@@ -52,7 +52,7 @@ lose it. The cache is deleted when the app exits; leftovers from a crashed run a
 
 ### Download
 
-Take `VideoSplitTool-v1.4-win64.exe` from [Releases](../../releases), put it anywhere and run it.
+Take `VideoSplitTool-v1.5-win64.exe` from [Releases](../../releases), put it anywhere and run it.
 The binary is a PyInstaller one-file build; the UI is in Chinese. `build.bat` produces the same
 executable as `VideoSplitTool.exe`; the release asset just carries the version in its name.
 
@@ -123,7 +123,7 @@ MIT
 
 ### 下载
 
-到 [Releases](../../releases) 取 `VideoSplitTool-v1.4-win64.exe`，放哪都行，双击即用。是
+到 [Releases](../../releases) 取 `VideoSplitTool-v1.5-win64.exe`，放哪都行，双击即用。是
 PyInstaller 单文件打包，界面中文。`build.bat` 构建出来的同一份程序叫 `VideoSplitTool.exe`，
 Release 附件只是名字里带了版本号。
 
