@@ -51,10 +51,8 @@ deleted when the app exits, when the source changes, or on the next start if a p
 ### Download
 
 Take `VideoSplitTool-v1.3-win64.exe` from [Releases](../../releases), put it anywhere and run it.
-The binary is a PyInstaller one-file build; the UI is in Chinese.
-
-Small note on the file name: the build from source is called `SplitTool.exe` / `分割工具.exe`; the
-release asset is just renamed. Same binary.
+The binary is a PyInstaller one-file build; the UI is in Chinese. `build.bat` produces the same
+executable as `VideoSplitTool.exe`; the release asset just carries the version in its name.
 
 ### Build from source
 
@@ -123,10 +121,8 @@ MIT
 ### 下载
 
 到 [Releases](../../releases) 取 `VideoSplitTool-v1.3-win64.exe`，放哪都行，双击即用。是
-PyInstaller 单文件打包，界面中文。
-
-文件名说明：源码构建出来的叫 `VideoSplitTool.exe` / `分割工具.exe`，Release 附件只是改了名，
-二进制相同。
+PyInstaller 单文件打包，界面中文。`build.bat` 构建出来的同一份程序叫 `VideoSplitTool.exe`，
+Release 附件只是名字里带了版本号。
 
 ### 从源码构建
 
