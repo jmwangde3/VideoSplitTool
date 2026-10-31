@@ -1,9 +1,9 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-py -3.13 -m pip install --upgrade pyinstaller
+py -3.13 -m pip install --upgrade pyinstaller tkinterdnd2
 if errorlevel 1 goto fail
-py -3.13 -m PyInstaller --noconfirm --clean --onefile --noconsole --name VideoSplitTool --distpath dist --workpath build --specpath . split_tool.py
+py -3.13 -m PyInstaller --noconfirm --clean --onefile --noconsole --collect-all tkinterdnd2 --name VideoSplitTool --distpath dist --workpath build --specpath . split_tool.py
 if errorlevel 1 goto fail
 echo.
 echo Built: dist\VideoSplitTool.exe

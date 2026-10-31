@@ -23,10 +23,8 @@ from queue import Empty, Queue
 from tkinter import filedialog, messagebox, ttk
 
 CREATE_NO_WINDOW = 0x08000000
-WM_DROPFILES = 0x0233
-GWLP_WNDPROC = -4
 APP_TITLE = "分割工具"
-APP_VERSION = "1.4"
+APP_VERSION = "1.5"
 APP_DIR = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__))
 INI_PATH = os.path.join(APP_DIR, "split.ini")
 LOG_PATH = os.path.join(APP_DIR, "split.log")
@@ -53,22 +51,14 @@ def find_tool(name):
 FFMPEG = find_tool("ffmpeg")
 FFPROBE = find_tool("ffprobe")
 
-user32 = ctypes.WinDLL("user32", use_last_error=True)
-shell32 = ctypes.WinDLL("shell32", use_last_error=True)
-WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_ssize_t, wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
-user32.GetParent.argtypes = [wintypes.HWND]
-user32.GetParent.restype = wintypes.HWND
-user32.GetWindowLongPtrW.argtypes = [wintypes.HWND, ctypes.c_int]
-user32.GetWindowLongPtrW.restype = ctypes.c_ssize_t
-user32.SetWindowLongPtrW.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_ssize_t]
-user32.SetWindowLongPtrW.restype = ctypes.c_ssize_t
-user32.CallWindowProcW.argtypes = [ctypes.c_ssize_t, wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
-user32.CallWindowProcW.restype = ctypes.c_ssize_t
-shell32.DragAcceptFiles.argtypes = [wintypes.HWND, wintypes.BOOL]
-shell32.DragQueryFileW.argtypes = [wintypes.HANDLE, wintypes.UINT, wintypes.LPWSTR, wintypes.UINT]
-shell32.DragQueryFileW.restype = wintypes.UINT
-shell32.DragFinish.argtypes = [wintypes.HANDLE]
-shell32.DragFinish.restype = None
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+
+    _BaseTk = TkinterDnD.Tk
+    HAVE_DND = True
+except Exception:  # noqa: BLE001
+    _BaseTk = tk.Tk
+    HAVE_DND = False
 
 
 def log(message):
@@ -349,7 +339,7 @@ def do_cut(src, dst, start, end, on_phase=None, on_progress=None, abort_event=No
     return time.time() - started, cache_hit
 
 
-class App(tk.Tk):
+class App(_BaseTk):
     def __init__(self):
         super().__init__()
         self.title(f"{APP_TITLE} {APP_VERSION}")
@@ -372,7 +362,7 @@ class App(tk.Tk):
         if os.environ.get("SPLIT_TOOL_HIDDEN"):
             self.geometry("+-4000+-4000")
         self.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.enable_drop()
+        self.register_drop()
         self.after(100, self.poll_queue)
 
     # ---------- 界面 ----------
@@ -441,44 +431,28 @@ class App(tk.Tk):
             log(f"save settings failed: {exc}")
 
     # ---------- 交互 ----------
-    def enable_drop(self):
-        """让窗口接收资源管理器拖进来的文件。"""
+    def register_drop(self):
+        """用 tkdnd 注册拖放目标：拖放在 Tcl/C 层处理，不经过 Python 窗口回调。
+        （ctypes 的 WndProc 子类化会在 Tk 释放 GIL 的消息循环里弄坏线程状态，实测整进程 abort。）"""
+        if not HAVE_DND:
+            log("tkinterdnd2 not available, drag and drop disabled")
+            return
         try:
-            self.update_idletasks()
-            hwnd = user32.GetParent(self.winfo_id()) or self.winfo_id()
-            shell32.DragAcceptFiles(hwnd, True)
-            self._drop_hwnd = hwnd
-            self._old_proc = user32.GetWindowLongPtrW(hwnd, GWLP_WNDPROC)
-
-            def proc(h, msg, wparam, lparam):
-                if msg == WM_DROPFILES:
-                    path = None
-                    count = 0
-                    log("WM_DROPFILES received")
-                    try:
-                        count = shell32.DragQueryFileW(wparam, 0xFFFFFFFF, None, 0)
-                        if count:
-                            buf = ctypes.create_unicode_buffer(32767)
-                            shell32.DragQueryFileW(wparam, 0, buf, 32767)
-                            path = buf.value
-                    except Exception as exc:  # noqa: BLE001
-                        log(f"drop read failed: {exc}")
-                    finally:
-                        try:
-                            shell32.DragFinish(wparam)
-                        except Exception:  # noqa: BLE001
-                            pass
-                    if path:
-                        self.after(0, lambda p=path, n=count: self.accept_dropped(p, n))
-                    return 0
-                return user32.CallWindowProcW(self._old_proc, h, msg, wparam, lparam)
-
-            self._drop_cb = WNDPROC(proc)
-            user32.SetWindowLongPtrW(hwnd, GWLP_WNDPROC,
-                                     ctypes.cast(self._drop_cb, ctypes.c_void_p).value)
-            log(f"drop hook installed on {hwnd}")
+            self.drop_target_register(DND_FILES)
+            self.dnd_bind("<<Drop>>", self.on_drop)
+            log("drop target registered (tkdnd)")
         except Exception as exc:  # noqa: BLE001
-            log(f"enable drop failed: {exc}")
+            log(f"drop target register failed: {exc}")
+
+    def on_drop(self, event):
+        try:
+            paths = list(self.tk.splitlist(event.data))
+        except Exception:  # noqa: BLE001
+            paths = [str(event.data)]
+        if not paths:
+            return getattr(event, "action", "copy")
+        self.accept_dropped(paths[0], len(paths))
+        return getattr(event, "action", "copy")
 
     def accept_dropped(self, path, count=1):
         path = os.path.normpath(path.strip().strip('"'))

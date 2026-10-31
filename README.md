@@ -48,6 +48,7 @@ lose it. The cache is deleted when the app exits; leftovers from a crashed run a
 
 - Windows 10/11
 - `ffmpeg.exe` and `ffprobe.exe` on `PATH`, or in `C:\ffmpeg\bin`
+- For running from source or building: `tkinterdnd2` (drag and drop)
 
 ### Download
 
@@ -58,8 +59,8 @@ executable as `VideoSplitTool.exe`; the release asset just carries the version i
 ### Build from source
 
 ```
-py -3.13 -m pip install pyinstaller
-py -3.13 -m PyInstaller --onefile --noconsole --name VideoSplitTool split_tool.py
+py -3.13 -m pip install pyinstaller tkinterdnd2
+py -3.13 -m PyInstaller --onefile --noconsole --collect-all tkinterdnd2 --name VideoSplitTool split_tool.py
 ```
 
 or run `build.bat`.
@@ -129,8 +130,8 @@ Release 附件只是名字里带了版本号。
 ### 从源码构建
 
 ```
-py -3.13 -m pip install pyinstaller
-py -3.13 -m PyInstaller --onefile --noconsole --name VideoSplitTool split_tool.py
+py -3.13 -m pip install pyinstaller tkinterdnd2
+py -3.13 -m PyInstaller --onefile --noconsole --collect-all tkinterdnd2 --name VideoSplitTool split_tool.py
 ```
 
 或者直接跑 `build.bat`。
