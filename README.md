@@ -26,8 +26,9 @@ This tool always works in two passes:
 2. cut the requested range from that intermediate file, again with stream copy.
 
 Inside one session the intermediate file is cached per source (keyed by path + size + mtime), so the
-first cut of a movie pays the remux cost and every following cut takes about 0.2 s. The cache is
-deleted when the app exits, when the source changes, or on the next start if a previous run crashed.
+first cut of a movie pays the remux cost and every following cut takes about 0.2 s. Switching to
+another source keeps the old cache until the new remux has finished, so aborting a switch does not
+lose it. The cache is deleted when the app exits; leftovers from a crashed run are removed at startup.
 
 ### Features
 
@@ -50,7 +51,7 @@ deleted when the app exits, when the source changes, or on the next start if a p
 
 ### Download
 
-Take `VideoSplitTool-v1.3-win64.exe` from [Releases](../../releases), put it anywhere and run it.
+Take `VideoSplitTool-v1.4-win64.exe` from [Releases](../../releases), put it anywhere and run it.
 The binary is a PyInstaller one-file build; the UI is in Chinese. `build.bat` produces the same
 executable as `VideoSplitTool.exe`; the release asset just carries the version in its name.
 
@@ -100,7 +101,8 @@ MIT
 2. 再从中间文件里切指定区间，同样是流复制。
 
 同一次运行里，中间文件按源缓存（键是路径 + 文件大小 + 修改时间）：同一部片子第一刀付转封装的
-时间，后面每刀 0.2 秒左右。程序退出、换源、或上次崩溃后下次启动时，缓存会被删掉。
+时间，后面每刀 0.2 秒左右。换源时旧缓存保留到新源转封装成功之后再删，中途中断不会把它丢掉。
+程序退出时删缓存；上次崩溃留下的残留下次启动时清掉。
 
 ### 功能
 
@@ -120,7 +122,7 @@ MIT
 
 ### 下载
 
-到 [Releases](../../releases) 取 `VideoSplitTool-v1.3-win64.exe`，放哪都行，双击即用。是
+到 [Releases](../../releases) 取 `VideoSplitTool-v1.4-win64.exe`，放哪都行，双击即用。是
 PyInstaller 单文件打包，界面中文。`build.bat` 构建出来的同一份程序叫 `VideoSplitTool.exe`，
 Release 附件只是名字里带了版本号。
 

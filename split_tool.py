@@ -26,7 +26,7 @@ CREATE_NO_WINDOW = 0x08000000
 WM_DROPFILES = 0x0233
 GWLP_WNDPROC = -4
 APP_TITLE = "分割工具"
-APP_VERSION = "1.3"
+APP_VERSION = "1.4"
 APP_DIR = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__))
 INI_PATH = os.path.join(APP_DIR, "split.ini")
 LOG_PATH = os.path.join(APP_DIR, "split.log")
@@ -292,10 +292,12 @@ def do_cut(src, dst, start, end, on_phase=None, on_progress=None, abort_event=No
                 on_phase("切片（用缓存）")
             base_pct = 0.0
         else:
-            if use_cache:
-                drop_cache()
+            # 旧缓存保留到新转封装成功之后再删，避免中途中断把上一个源的缓存也赔进去
+            old_path = _cache.get("path") if use_cache else ""
             free = shutil.disk_usage(tempfile.gettempdir()).free
             need = os.path.getsize(src) + 64 * 1024 * 1024
+            if old_path and old_path != tmp_path and os.path.isfile(old_path):
+                need += os.path.getsize(old_path)
             if free < need:
                 raise SplitError(f"临时目录空间不够（需要 {human_size(need)}，剩 {human_size(free)}）")
             if on_phase:
@@ -308,6 +310,11 @@ def do_cut(src, dst, start, end, on_phase=None, on_progress=None, abort_event=No
             )
             remux_ok = True
             if use_cache:
+                if old_path and old_path != tmp_path and os.path.isfile(old_path):
+                    try:
+                        os.remove(old_path)
+                    except OSError:
+                        pass
                 _cache["key"] = key
                 _cache["path"] = tmp_path
             if on_phase:
